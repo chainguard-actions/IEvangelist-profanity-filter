@@ -1,0 +1,164 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CodeBlock from '../components/CodeBlock.astro';
+import Callout from '../components/Callout.astro';
+import SectionEyebrow from '../components/SectionEyebrow.astro';
+import { Icon } from 'astro-icon/components';
+
+const base = import.meta.env.BASE_URL;
+
+const standaloneWorkflow = `# .github/workflows/profanity-filter.yml
+name: Profanity filter
+
+# Trigger on issue or pull request events
+on:
+  issue_comment:
+    types: [created, edited]
+  issues:
+    types: [opened, edited, reopened]
+  pull_request:
+    types: [opened, edited, reopened]
+
+# Required permissions
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  apply-filter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan for profanity
+        # Skip bot-authored events
+        if: github.actor != 'dependabot[bot]'
+        uses: IEvangelist/profanity-filter@main
+        id: profanity-filter
+        with:
+          token: \${{ secrets.GITHUB_TOKEN }}
+          replacement-strategy: emoji`;
+
+const existingWorkflow = `- name: Scan for profanity
+  if: github.actor != 'dependabot[bot]'
+  uses: IEvangelist/profanity-filter@main
+  id: profanity-filter
+  with:
+    token: \${{ secrets.GITHUB_TOKEN }}
+    replacement-strategy: first-letter-then-asterisk`;
+---
+
+<BaseLayout
+  title="Get started — Potty Mouth"
+  description="Two-minute setup. Add Potty Mouth to your repo with a single workflow file."
+>
+  <section class="max-w-5xl mx-auto px-6 lg:px-8 py-16 sm:py-20">
+    <div class="max-w-2xl">
+      <SectionEyebrow icon="ph:rocket-launch-duotone" label="Get started" />
+      <h1 class="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-ink-900 dark:text-white">
+        Up and running in two minutes.
+      </h1>
+      <p class="mt-5 text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+        Potty Mouth is a single GitHub Action step. Drop it into a workflow that runs on issue and
+        pull request events, and it does the rest.
+      </p>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="mt-14 flex gap-5">
+      <div class="shrink-0">
+        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-white font-bold">1</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h2 class="flex items-center gap-2 text-2xl font-semibold tracking-tight text-ink-900 dark:text-white">
+          <Icon name="ph:file-plus-duotone" class="h-6 w-6 text-brand-600 dark:text-brand-400" />
+          Create the workflow file
+        </h2>
+        <p class="mt-2 text-ink-600 dark:text-ink-300">
+          Add a new file at <code class="font-mono text-sm px-1.5 py-0.5 rounded bg-ink-100 dark:bg-white/10">.github/workflows/profanity-filter.yml</code>
+          in your repository.
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="mt-12 flex gap-5">
+      <div class="shrink-0">
+        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-white font-bold">2</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h2 class="flex items-center gap-2 text-2xl font-semibold tracking-tight text-ink-900 dark:text-white">
+          <Icon name="ph:clipboard-text-duotone" class="h-6 w-6 text-brand-600 dark:text-brand-400" />
+          Paste this in
+        </h2>
+        <p class="mt-2 text-ink-600 dark:text-ink-300">
+          A complete, copy-pastable starting workflow. Adjust the
+          <code class="font-mono text-sm px-1.5 py-0.5 rounded bg-ink-100 dark:bg-white/10">replacement-strategy</code>
+          to taste.
+        </p>
+        <CodeBlock code={standaloneWorkflow} lang="yaml" filename=".github/workflows/profanity-filter.yml" />
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="mt-12 flex gap-5">
+      <div class="shrink-0">
+        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-white font-bold">3</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h2 class="flex items-center gap-2 text-2xl font-semibold tracking-tight text-ink-900 dark:text-white">
+          <Icon name="ph:git-commit-duotone" class="h-6 w-6 text-brand-600 dark:text-brand-400" />
+          Commit and push
+        </h2>
+        <p class="mt-2 text-ink-600 dark:text-ink-300">
+          On the next issue, comment, or pull request that opens or edits, the action runs and a
+          job summary will be attached to the run.
+        </p>
+      </div>
+    </div>
+
+    <Callout variant="tip" title="Already have a workflow?">
+      <p>
+        If you already have a workflow triggered on
+        <code class="font-mono text-sm px-1 py-0.5 rounded bg-white/40 dark:bg-white/10">issues</code> /
+        <code class="font-mono text-sm px-1 py-0.5 rounded bg-white/40 dark:bg-white/10">pull_request</code>,
+        just add this step instead of creating a new file:
+      </p>
+    </Callout>
+
+    <CodeBlock code={existingWorkflow} lang="yaml" />
+
+    <Callout variant="important" title="Permissions">
+      <p>
+        Your workflow needs <code class="font-mono text-sm px-1 py-0.5 rounded bg-white/40 dark:bg-white/10">issues: write</code>
+        and <code class="font-mono text-sm px-1 py-0.5 rounded bg-white/40 dark:bg-white/10">pull-requests: write</code>
+        so the built-in <code class="font-mono text-sm px-1 py-0.5 rounded bg-white/40 dark:bg-white/10">GITHUB_TOKEN</code>
+        can update content and react to issues.
+      </p>
+    </Callout>
+
+    <Callout variant="note" title="Optional label">
+      <p>
+        Create a label named exactly <code class="font-mono text-sm px-1 py-0.5 rounded bg-white/40 dark:bg-white/10">profane content 🤬</code>
+        in your repo. When found, Potty Mouth will automatically apply it to flagged issues and pull requests
+        for easy filtering.
+      </p>
+    </Callout>
+
+    <div class="mt-16 flex flex-col sm:flex-row items-center gap-3">
+      <a
+        href={`${base}/api`}
+        class="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold transition-colors"
+      >
+        <Icon name="ph:book-open-duotone" class="h-4 w-4" />
+        See all inputs &amp; strategies
+        <Icon name="ph:arrow-right-duotone" class="h-4 w-4" />
+      </a>
+      <a
+        href={`${base}/examples`}
+        class="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-ink-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.03] hover:bg-white dark:hover:bg-white/[0.06] text-ink-900 dark:text-ink-100 font-semibold transition-colors"
+      >
+        <Icon name="ph:list-duotone" class="h-4 w-4" />
+        Browse examples
+      </a>
+    </div>
+  </section>
+</BaseLayout>

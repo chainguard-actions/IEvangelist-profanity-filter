@@ -1,0 +1,314 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CodeBlock from '../components/CodeBlock.astro';
+import FeatureCard from '../components/FeatureCard.astro';
+import StrategyCard from '../components/StrategyCard.astro';
+import Stat from '../components/Stat.astro';
+import SectionEyebrow from '../components/SectionEyebrow.astro';
+import { Icon } from 'astro-icon/components';
+
+const base = import.meta.env.BASE_URL;
+
+const heroSnippet = `# .github/workflows/profanity-filter.yml
+name: Profanity filter
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+  pull_request:
+    types: [opened, edited, reopened]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  apply-filter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan for profanity
+        if: github.actor != 'dependabot[bot]'
+        uses: IEvangelist/profanity-filter@main
+        with:
+          token: \${{ secrets.GITHUB_TOKEN }}
+          replacement-strategy: emoji`;
+
+const features = [
+  {
+    icon: '🌍',
+    title: '9 languages, 4,900+ words',
+    body: 'Curated word lists across English, Spanish, French, German, Italian, Portuguese, Russian, Arabic, and Chinese — kept up to date in plain text files anyone can audit.',
+  },
+  {
+    icon: '🎨',
+    title: '14 replacement strategies',
+    body: 'Pick the vibe — from classic <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-ink-100 dark:bg-white/10">****</code> asterisks to playful 😡 anger emojis or full <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-ink-100 dark:bg-white/10">████</code> redactions.',
+  },
+  {
+    icon: '⚡',
+    title: 'Native AOT performance',
+    body: 'Built with .NET 10 and Native AOT — instant cold starts, tiny binaries, and no .NET runtime to install on the runner.',
+  },
+  {
+    icon: '🧩',
+    title: 'Drop-in step',
+    body: 'A single GitHub Action step. Add it to a new workflow or paste it into an existing one — no scripts, no infrastructure, no maintenance.',
+  },
+  {
+    icon: '📊',
+    title: 'Workflow job summaries',
+    body: 'Every run produces a clean, detailed summary table showing exactly what was found and how it was replaced — perfect for audits.',
+  },
+  {
+    icon: '🔧',
+    title: 'Bring your own words',
+    body: 'Extend the dictionary with a comma-separated list or pull from your own URL. Works alongside the built-in filters automatically.',
+  },
+];
+
+const strategies = [
+  { name: 'asterisk', example: '****', description: 'Classic asterisks — the safe default.' },
+  { name: 'emoji', example: '💩', description: 'A random expressive emoji per match.' },
+  { name: 'grawlix', example: '#%$!', description: 'Comic-book style symbol soup.' },
+  { name: 'bold-grawlix', example: '<strong>#%$!</strong>', description: 'Grawlix, but louder.', isHtml: true },
+  { name: 'bleep', example: 'bleep', description: 'Replaces with the literal word "bleep".' },
+  { name: 'redacted-rectangle', example: '████', description: 'Top-secret redaction blocks.' },
+  { name: 'anger-emoji', example: '😡', description: 'A random anger-themed emoji.' },
+  { name: 'middle-asterisk', example: 'f**k', description: 'Keeps first and last letters intact.' },
+  { name: 'middle-swear-emoji', example: 'f🤬k', description: 'A swear emoji in the middle.' },
+  { name: 'random-asterisk', example: '* — ****', description: 'Random number of asterisks.' },
+  { name: 'first-letter-then-asterisk', example: 'f***', description: 'Keep the first letter only.' },
+  { name: 'vowel-asterisk', example: 'sh*t', description: 'Replaces only the vowels.' },
+  { name: 'strike-through', example: '<del>shit</del>', description: 'Wraps content in &lt;del&gt; tags.', isHtml: true },
+  { name: 'underscores', example: '____', description: 'Replaces with underscores.' },
+];
+---
+
+<BaseLayout
+  title="Potty Mouth — Profanity filter for GitHub Actions"
+  description="A drop-in GitHub Action that filters profane content from issues, PRs, and comments. 4,900+ words, 9 languages, 14 replacement strategies, Native AOT performance."
+>
+  <section class="relative overflow-hidden">
+    <div class="bg-grid absolute inset-0 opacity-60"></div>
+    <div class="glow pointer-events-none absolute inset-x-0 top-0 h-[640px]"></div>
+
+    <div class="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-20 sm:pt-24 sm:pb-28">
+      <div class="text-center max-w-3xl mx-auto">
+        <a
+          href="https://github.com/IEvangelist/profanity-filter"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-full border border-ink-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.03] backdrop-blur px-3.5 py-1.5 text-xs font-medium text-ink-700 dark:text-ink-300 hover:border-brand-300/60 dark:hover:border-brand-500/30 transition-colors"
+        >
+          <span class="inline-flex h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse"></span>
+          <Icon name="ph:github-logo-duotone" class="h-3.5 w-3.5" />
+          Open source on GitHub
+          <Icon name="ph:arrow-right-duotone" class="h-3.5 w-3.5" />
+        </a>
+
+        <h1 class="mt-6 text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-ink-900 dark:text-white">
+          Keep your repo
+          <br />
+          <span class="inline-block animate-float">🤬</span>
+          <span class="text-shimmer">Potty&nbsp;Mouth</span>
+          <br />
+          <span class="text-ink-600 dark:text-ink-400">free.</span>
+        </h1>
+
+        <p class="mt-7 text-lg sm:text-xl leading-relaxed text-ink-600 dark:text-ink-300">
+          A drop-in GitHub Action that scans issues, pull requests, and comments for profane content
+          &mdash; then replaces it with the strategy of your choice. Built with .NET Native AOT for
+          instant, dependency-free runs.
+        </p>
+
+        <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <a
+            href={`${base}/getting-started`}
+            class="group inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold shadow-lg shadow-brand-500/25 transition-all hover:shadow-brand-500/40 hover:-translate-y-0.5"
+          >
+            <Icon name="ph:rocket-launch-duotone" class="h-4 w-4" />
+            Get started in 2 minutes
+            <Icon name="ph:arrow-right-duotone" class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </a>
+          <a
+            href="https://github.com/IEvangelist/profanity-filter"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg border border-ink-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.03] backdrop-blur hover:bg-white dark:hover:bg-white/[0.06] text-ink-900 dark:text-ink-100 font-semibold transition-colors"
+          >
+            <Icon name="ph:star-duotone" class="h-4 w-4" />
+            Star on GitHub
+          </a>
+        </div>
+
+        <p class="mt-6 text-xs text-ink-500 dark:text-ink-500">
+          MIT licensed &middot; No registration &middot; Works with the built-in <code class="font-mono">GITHUB_TOKEN</code>
+        </p>
+      </div>
+
+      <div class="mt-16 max-w-4xl mx-auto">
+        <CodeBlock code={heroSnippet} lang="yaml" filename=".github/workflows/profanity-filter.yml" />
+      </div>
+    </div>
+  </section>
+
+  <section class="border-y border-ink-200/60 dark:border-white/5 bg-ink-50/50 dark:bg-white/[0.015]">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-10 sm:py-12">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10">
+        <Stat icon="ph:book-open-text-duotone" value="4,900+" label="Curated words" hint="across the dictionary" />
+        <Stat icon="ph:globe-duotone" value="9" label="Languages" hint="globally inclusive" />
+        <Stat icon="ph:palette-duotone" value="14" label="Replacement strategies" hint="for every taste" />
+        <Stat icon="ph:lightning-duotone" value="Native AOT" label=".NET 10 powered" hint="instant cold starts" />
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-6 lg:px-8 py-20 sm:py-24 text-center">
+    <SectionEyebrow icon="ph:heart-duotone" label="Why bother?" />
+    <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-ink-900 dark:text-white">
+      Not every contributor is sunshine and rainbows.
+    </h2>
+    <p class="mt-6 text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+      Open source is a public-facing space, and the tone of a project sets the tone of its community.
+      Potty Mouth quietly catches the rough edges &mdash; rewriting profane content, flagging the issue,
+      and leaving a clean audit trail behind &mdash; so you can keep building without playing comment-thread cop.
+    </p>
+    <p class="mt-4 text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+      With this action in your workflow, your repo can be 🌈 and 🐎.
+    </p>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-6 lg:px-8 py-12 sm:py-16">
+    <div class="text-center max-w-2xl mx-auto">
+      <SectionEyebrow icon="ph:sparkle-duotone" label="What's inside" />
+      <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-ink-900 dark:text-white">
+        Everything you need. Nothing you don't.
+      </h2>
+      <p class="mt-4 text-ink-600 dark:text-ink-400">
+        One step in your workflow, fourteen strategies, nine languages, and a clean job summary on every run.
+      </p>
+    </div>
+
+    <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {features.map(f => (
+        <FeatureCard icon={f.icon} title={f.title}>
+          <p set:html={f.body}></p>
+        </FeatureCard>
+      ))}
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-6 lg:px-8 py-16 sm:py-20">
+    <div class="text-center max-w-2xl mx-auto">
+      <SectionEyebrow icon="ph:paint-brush-duotone" label="Replacement strategies" />
+      <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-ink-900 dark:text-white">
+        14 ways to say <span class="line-through decoration-brand-500 decoration-[3px]">that word</span>.
+      </h2>
+      <p class="mt-4 text-ink-600 dark:text-ink-400">
+        Pick the strategy that fits your project's tone &mdash; from buttoned-up to playful.
+      </p>
+    </div>
+
+    <div class="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {strategies.map(s => (
+        <StrategyCard name={s.name} example={s.example} description={s.description} isHtml={s.isHtml} />
+      ))}
+    </div>
+
+    <div class="mt-10 text-center">
+      <a
+        href={`${base}/api`}
+        class="inline-flex items-center gap-2 text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
+      >
+        Read the full API reference
+        <Icon name="ph:arrow-right-duotone" class="h-4 w-4" />
+      </a>
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-6 lg:px-8 py-16 sm:py-20">
+    <div class="relative overflow-hidden rounded-3xl border border-ink-200/80 dark:border-white/10 bg-gradient-to-br from-sky-500/[0.07] via-violet-500/[0.05] to-brand-500/[0.07] dark:from-sky-500/[0.10] dark:via-violet-500/[0.08] dark:to-brand-500/[0.10] px-8 py-12 sm:px-12 sm:py-14">
+      <div class="bg-grid absolute inset-0 opacity-40"></div>
+      <div class="relative grid gap-10 lg:grid-cols-2 lg:items-center">
+        <div>
+          <SectionEyebrow icon="ph:cube-duotone" label="Also for Aspire" />
+          <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-ink-900 dark:text-white">
+            More than a GitHub Action.
+          </h2>
+          <p class="mt-4 text-lg leading-relaxed text-ink-700 dark:text-ink-300">
+            The same engine ships as a containerized Aspire resource. Drop
+            <code class="font-mono text-sm px-1.5 py-0.5 rounded bg-white/60 dark:bg-white/10">AddProfanityFilter</code>
+            into your AppHost &mdash; in C# <em>or</em> TypeScript &mdash; and you have a fast, local-first
+            HTTP filter alongside the rest of your services.
+          </p>
+          <div class="mt-6 flex flex-col sm:flex-row gap-3">
+            <a
+              href={`${base}/aspire`}
+              class="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-ink-900 hover:bg-ink-800 dark:bg-white dark:hover:bg-ink-100 text-white dark:text-ink-900 font-semibold transition-colors"
+            >
+              <Icon name="ph:book-open-duotone" class="h-4 w-4" />
+              Read the Aspire guide
+              <Icon name="ph:arrow-right-duotone" class="h-4 w-4" />
+            </a>
+            <a
+              href="https://www.nuget.org/packages/ProfanityFilter.Hosting"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-ink-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.03] hover:bg-white dark:hover:bg-white/[0.06] text-ink-900 dark:text-ink-100 font-semibold transition-colors"
+            >
+              <Icon name="ph:package-duotone" class="h-4 w-4" />
+              NuGet
+            </a>
+          </div>
+        </div>
+
+        <div class="relative">
+          <pre class="not-prose font-mono text-[13px] leading-relaxed rounded-xl border border-ink-200 dark:border-white/10 bg-[#0d1117] p-5 text-ink-200 overflow-x-auto"><code><span class="text-ink-500">// apphost.cs</span>
+<span class="text-pink-400">var</span> builder = DistributedApplication.CreateBuilder(args);
+
+<span class="text-pink-400">var</span> filter = builder.<span class="text-sky-300">AddProfanityFilter</span>(<span class="text-amber-300">"profanity-filter"</span>)
+    .<span class="text-sky-300">WithCustomDataBindMount</span>(<span class="text-amber-300">"./CustomData"</span>);
+
+builder.<span class="text-sky-300">AddProject</span>&lt;Projects.MyApi&gt;(<span class="text-amber-300">"api"</span>)
+    .<span class="text-sky-300">WithReference</span>(filter)
+    .<span class="text-sky-300">WaitFor</span>(filter);
+
+builder.Build().Run();</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-6 lg:px-8 pb-12">
+    <div class="relative overflow-hidden rounded-3xl border border-ink-200/80 dark:border-white/10 bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 px-8 py-16 sm:px-16 sm:py-20 text-center shadow-2xl shadow-brand-500/20">
+      <div class="bg-grid absolute inset-0 opacity-20"></div>
+      <div class="relative">
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+          Ready to clean up your repo?
+        </h2>
+        <p class="mt-4 text-lg text-white/80 max-w-xl mx-auto">
+          Two minutes from this page to a working workflow. No registration, no infrastructure, no excuses.
+        </p>
+        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <a
+            href={`${base}/getting-started`}
+            class="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg bg-white text-brand-700 hover:bg-ink-100 font-semibold shadow-xl transition-colors"
+          >
+            <Icon name="ph:rocket-launch-duotone" class="h-4 w-4" />
+            Get started
+            <Icon name="ph:arrow-right-duotone" class="h-4 w-4" />
+          </a>
+          <a
+            href={`${base}/examples`}
+            class="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg border border-white/30 hover:border-white/50 hover:bg-white/10 text-white font-semibold transition-colors"
+          >
+            <Icon name="ph:list-duotone" class="h-4 w-4" />
+            See examples
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
