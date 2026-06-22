@@ -1,6 +1,11 @@
 {
   "owner": "IEvangelist",
   "repo": "profanity-filter",
-  "version": "",
-  "url": "https://github.com/IEvangelist/profanity-filter"
+  "version": "10.0.1-preview.008",
+  "commit_sha": "50a0a2bb5a67e06faab7a7d166a61ea682273b8a",
+  "url": "https://github.com/IEvangelist/profanity-filter",
+  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "1",
+  "harden_agent_version": "1"
 }
