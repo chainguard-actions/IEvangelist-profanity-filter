@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>$(DefaultTargetFramework)</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableSdkContainerDebugging>True</EnableSdkContainerDebugging>
+    <UserSecretsId>c381930b-4a15-4c4d-8d19-b5070cbb9fd6</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IsAotCompatible>false</IsAotCompatible>
+    <NoWarn>$(NoWarn);IDE0005</NoWarn>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ContainerUser>root</ContainerUser>
+    <ContainerDescription>Potty Mouth: A profanity filter exposed as a Web API.</ContainerDescription>
+    <ContainerAuthors>David Pine</ContainerAuthors>
+    <ContainerInformationUrl>
+      https://github.com/IEvangelist/profanity-filter
+    </ContainerInformationUrl>
+    <ContainerDocumentationUrl>
+      https://github.com/IEvangelist/profanity-filter
+    </ContainerDocumentationUrl>
+    <ContainerLicenseExpression>
+      https://github.com/IEvangelist/profanity-filter/blob/main/LICENSE
+    </ContainerLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Blazor.LocalStorage" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Markdig" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.Extensions.Compliance.Redaction" />
+    <PackageReference Include="System.Linq.Async" />
+    <PackageReference Include="System.Reactive" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProfanityFilter.Client\ProfanityFilter.Client.csproj" />
+    <ProjectReference Include="..\ProfanityFilter.Services\ProfanityFilter.Services.csproj" />
+  </ItemGroup>
+
+</Project>
