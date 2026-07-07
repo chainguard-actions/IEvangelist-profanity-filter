@@ -1,0 +1,201 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CodeBlock from '../components/CodeBlock.astro';
+import SectionEyebrow from '../components/SectionEyebrow.astro';
+import PageNav from '../components/PageNav.astro';
+import { Icon } from 'astro-icon/components';
+
+const base = import.meta.env.BASE_URL;
+
+const basicEmoji = `name: Profanity filter
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+  pull_request:
+    types: [opened, edited, reopened]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  apply-filter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan for profanity
+        if: github.actor != 'dependabot[bot]'
+        uses: IEvangelist/profanity-filter@main
+        with:
+          token: \${{ secrets.GITHUB_TOKEN }}
+          replacement-strategy: emoji`;
+
+const customWords = `- name: Scan for profanity
+  uses: IEvangelist/profanity-filter@main
+  with:
+    token: \${{ secrets.GITHUB_TOKEN }}
+    replacement-strategy: middle-asterisk
+    # Add your own words on top of the 6,500+ built-in
+    manual-profane-words: foo,bar,baz`;
+
+const customUrl = `- name: Scan for profanity
+  uses: IEvangelist/profanity-filter@main
+  with:
+    token: \${{ secrets.GITHUB_TOKEN }}
+    replacement-strategy: bleep
+    # Pull words from any URL that returns newline-delimited text
+    custom-profane-words-url: https://example.com/words.txt`;
+
+const angerEmojiWithReaction = `- name: Scan for profanity
+  uses: IEvangelist/profanity-filter@main
+  with:
+    token: \${{ secrets.GITHUB_TOKEN }}
+    replacement-strategy: anger-emoji
+    include-confused-reaction: true
+    include-updated-note: true`;
+
+const reusableWorkflow = `# Caller workflow in any repo
+name: Profanity filter
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+  pull_request:
+    types: [opened, edited, reopened]
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  filter:
+    uses: IEvangelist/profanity-filter/.github/workflows/profanity-filter.yml@main
+    with:
+      replacement-strategy: emoji
+    secrets:
+      token: \${{ secrets.GITHUB_TOKEN }}`;
+
+const composedWorkflow = `# Drop into an existing workflow that already
+# triggers on issues/pull requests
+- name: Scan for profanity
+  if: github.actor != 'dependabot[bot]'
+  uses: IEvangelist/profanity-filter@main
+  id: profanity-filter
+  with:
+    token: \${{ secrets.GITHUB_TOKEN }}
+    replacement-strategy: first-letter-then-asterisk
+
+- name: Run other checks
+  run: |
+    echo "Filter step finished, continuing..."`;
+
+const examples = [
+  {
+    title: '🚀 Basic emoji replacement',
+    intro: 'The simplest end-to-end workflow. Replaces any detected profane content with a random emoji and posts a job summary.',
+    code: basicEmoji,
+    filename: '.github/workflows/profanity-filter.yml',
+  },
+  {
+    title: '🧠 Custom inline words',
+    intro: 'Add a comma-separated list on top of the built-in dictionary. Useful for project-specific terminology.',
+    code: customWords,
+  },
+  {
+    title: '🌐 Custom words from a URL',
+    intro: 'Centralize a shared list across repos by hosting a newline-delimited text file at any URL.',
+    code: customUrl,
+  },
+  {
+    title: '😡 Anger emojis + confused reaction',
+    intro: 'Add a bit of personality. The bot reacts to the offending issue or PR with 😕 and replaces words with anger emojis.',
+    code: angerEmojiWithReaction,
+  },
+  {
+    title: '🧱 Composed into an existing workflow',
+    intro: 'Already have a workflow on issue/PR events? Just add the step. No new file required.',
+    code: composedWorkflow,
+  },
+  {
+    title: '🔁 Reusable workflow',
+    intro: 'Call the published reusable workflow directly &mdash; no individual step copy-paste across repos.',
+    code: reusableWorkflow,
+    filename: '.github/workflows/profanity-filter.yml',
+  },
+];
+---
+
+<BaseLayout
+  title="Examples — Potty Mouth"
+  description="Copy-paste ready examples for common Potty Mouth setups: emoji replacement, custom words, reusable workflows, and more."
+>
+  <section class="max-w-5xl mx-auto px-6 lg:px-8 py-16 sm:py-20">
+    <div class="max-w-2xl">
+      <SectionEyebrow icon="ph:list-checks-duotone" label="Examples" />
+      <h1 class="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-ink-900 dark:text-white">
+        Real-world recipes.
+      </h1>
+      <p class="mt-5 text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+        Pick the recipe that matches your setup. Every example is copy-pasteable
+        and ready for production.
+      </p>
+    </div>
+
+    <div class="mt-12 space-y-14">
+      {examples.map(ex => (
+        <article>
+          <h2 class="text-2xl font-bold tracking-tight text-ink-900 dark:text-white">{ex.title}</h2>
+          <p class="mt-2 text-ink-600 dark:text-ink-300" set:html={ex.intro}></p>
+          <CodeBlock code={ex.code} lang="yaml" filename={ex.filename} />
+        </article>
+      ))}
+    </div>
+
+    <div class="mt-16 rounded-2xl border border-ink-200/80 dark:border-white/5 bg-ink-50 dark:bg-white/[0.02] p-6 sm:p-8">
+      <h3 class="flex items-center gap-2 text-lg font-semibold text-ink-900 dark:text-white">
+        <Icon name="ph:lightbulb-duotone" class="h-5 w-5 text-brand-600 dark:text-brand-400" />
+        Need something else?
+      </h3>
+      <p class="mt-2 text-ink-600 dark:text-ink-300">
+        If your use-case isn't covered here, open an issue or discussion on GitHub &mdash; we'll
+        gladly add a recipe.
+      </p>
+      <div class="mt-4 flex flex-wrap gap-3">
+        <a
+          href="https://github.com/IEvangelist/profanity-filter/issues/new"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold transition-colors"
+        >
+          <Icon name="ph:bug-duotone" class="h-4 w-4" />
+          Open an issue
+        </a>
+        <a
+          href="https://github.com/IEvangelist/profanity-filter/discussions"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md border border-ink-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:bg-ink-50 dark:hover:bg-white/[0.06] text-ink-900 dark:text-ink-100 text-sm font-semibold transition-colors"
+        >
+          <Icon name="ph:chats-duotone" class="h-4 w-4" />
+          Start a discussion
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <PageNav
+    prev={{
+      href: `${base}/containers`,
+      label: 'Containers',
+      icon: 'ph:shipping-container-duotone',
+      description: 'Two distroless Linux images on GHCR.',
+    }}
+    next={{
+      href: `${base}`,
+      label: 'Overview',
+      icon: 'ph:house-duotone',
+      eyebrow: 'Start over',
+      description: 'Back to the project landing page.',
+    }}
+  />
+</BaseLayout>

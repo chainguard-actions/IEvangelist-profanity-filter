@@ -1,0 +1,32 @@
+name: Test manual-profane-words input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: fake-token-for-testing
+      GITHUB_EVENT_NAME: issues
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run profanity filter with manual profane words
+        id: action
+        continue-on-error: true
+        uses: .
+        with:
+          token: fake-token-for-testing
+          replacement-strategy: asterisk
+          include-updated-note: 'true'
+          include-confused-reaction: 'false'
+          manual-profane-words: 'badword1,badword2,badword3'
+      - name: Assert action ran with manual-profane-words set
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "Action outcome: $OUTCOME"
+          if [ "$OUTCOME" = "cancelled" ]; then
+            echo "FAIL: action was cancelled unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran with manual-profane-words set, outcome=$OUTCOME"

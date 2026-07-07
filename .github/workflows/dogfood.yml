@@ -1,0 +1,27 @@
+name: Eat the Dogfood
+
+on:
+  issue_comment:
+    types: [created, edited]
+  issues:
+    types: [opened, edited, reopened]
+  pull_request:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  filter:
+    name: Apply profanity filter
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🤬 Profanity filter
+      if: ${{ github.actor != 'dependabot[bot]' && github.actor != 'github-actions[bot]'  }}
+      uses: IEvangelist/profanity-filter@e46a6150b7f6fb33e6b183750092641d53016f06 # main
+      id: profanity-filter
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        replacement-strategy: bold-grawlix

@@ -1,0 +1,75 @@
+name: Release GitHub Action container
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The manual version to release'
+        required: true
+
+env:
+  IMAGE_NAME: ievangelist/profanity-filter
+  # The base image is now inferred by the .NET SDK.
+  # https://github.com/dotnet/dotnet-docker/blob/nightly/README.runtime-deps.md#full-tag-listing
+  # BASE_IMAGE: mcr.microsoft.com/dotnet/nightly/runtime-deps:9.0.0-noble-chiseled-aot
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Check out the repo
+        uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f # main
+
+      - name: 🏷️ Get the version
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        env:
+          GIT_REF: ${{ github.ref }}
+        run: |
+          raw="${GIT_REF#refs/tags/}"
+          safe=$(printf '%s' "$raw" | tr -d '\n\r')
+          echo "RELEASE_VERSION=$safe" >> "$GITHUB_ENV"
+
+      - name: 🏷️ Get the version
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          safe=$(printf '%s' "$INPUT_VERSION" | tr -d '\n\r')
+          echo "RELEASE_VERSION=$safe" >> "$GITHUB_ENV"
+
+      - name: 💜 Setup .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # main
+
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐳 Publish app
+        working-directory: ./src/ProfanityFilter.Action
+        env:
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+          CONTAINER_IMAGE_NAME: ${{ env.IMAGE_NAME }}
+        run: |
+          dotnet publish \
+            /t:PublishContainer \
+            -p DebugType=none \
+            -p ContainerRegistry=ghcr.io \
+            -p ContainerImageTags="\"latest;$RELEASE_VERSION\"" \
+            -p ContainerRepository="$CONTAINER_IMAGE_NAME" \
+            -bl
+
+      - name: 📦 Upload build log
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # main
+        if: always()
+        with:
+          name: msbuild.binlog
+          path: src/ProfanityFilter.Action/msbuild.binlog

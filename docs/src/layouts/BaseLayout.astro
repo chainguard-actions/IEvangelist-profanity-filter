@@ -1,0 +1,108 @@
+---
+import '../styles/global.css';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'A GitHub Action that filters profane content from issues, pull requests, and comments — backed by 6,500+ words across 28 languages and built with .NET Native AOT.',
+} = Astro.props;
+
+const base = import.meta.env.BASE_URL;
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const ogImage = new URL(`${base}/og-image.png`.replace(/\/{2,}/g, '/'), Astro.site).toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="720" />
+    <meta property="og:image:alt" content="Potty Mouth — Profanity filter for GitHub Actions: dark-themed landing page." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content="Potty Mouth — Profanity filter for GitHub Actions: dark-themed landing page." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
+
+    <title>{title}</title>
+
+    <script is:inline>
+      (() => {
+        const stored = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = stored ?? (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Navbar />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <Footer />
+
+    <script is:inline>
+      (() => {
+        const html = document.documentElement;
+        const toggle = document.getElementById('theme-toggle');
+
+        toggle?.addEventListener('click', () => {
+          const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          html.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+        });
+
+        document.querySelectorAll('.copy-btn').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const code = btn.getAttribute('data-copy') ?? '';
+            try {
+              await navigator.clipboard.writeText(code);
+            } catch {
+              const ta = document.createElement('textarea');
+              ta.value = code;
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+            }
+            const idle = btn.querySelector('.copy-idle');
+            const done = btn.querySelector('.copy-done');
+            const label = btn.querySelector('.copy-label');
+            idle?.classList.add('hidden');
+            done?.classList.remove('hidden');
+            if (label) label.textContent = 'Copied';
+            setTimeout(() => {
+              idle?.classList.remove('hidden');
+              done?.classList.add('hidden');
+              if (label) label.textContent = 'Copy';
+            }, 1800);
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

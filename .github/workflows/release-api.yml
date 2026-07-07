@@ -1,0 +1,80 @@
+name: Release API container
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The manual version to release'
+        required: true
+
+env:
+  IMAGE_NAME: ievangelist/profanity-filter-api
+  MSBUILDDEBUGENGINE: 1 # Enable MSBuild binary logging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Check out the repo
+        uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f # main
+
+      - name: 🏷️ Get the version
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        env:
+          GIT_REF: ${{ github.ref }}
+        run: |
+          raw="${GIT_REF#refs/tags/}"
+          safe=$(printf '%s' "$raw" | tr -d '\n\r')
+          echo "RELEASE_VERSION=$safe" >> "$GITHUB_ENV"
+
+      - name: 🏷️ Get the version
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          safe=$(printf '%s' "$INPUT_VERSION" | tr -d '\n\r')
+          echo "RELEASE_VERSION=$safe" >> "$GITHUB_ENV"
+
+      - name: 💜 Setup .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # main
+
+      - name: ✨ Install Aspire CLI
+        run: |
+          curl -sSL -o /tmp/aspire-install.sh https://aspire.dev/install.sh
+          bash /tmp/aspire-install.sh
+
+      - name: 📋 Output Aspire CLI version
+        run: aspire --version
+
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 💾 Cache Aspire deployment state
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ~/.aspire/deployments
+          key: aspire-deploy-${{ hashFiles('**/apphost.cs') }}-${{ github.ref }}
+          restore-keys: |
+            aspire-deploy-${{ hashFiles('**/apphost.cs') }}-
+            aspire-deploy-
+
+      - name: 🚀 Deploy with Aspire
+        working-directory: ./playground
+        run: aspire deploy --environment production
+
+      - name: 📦 Upload build log
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # main
+        if: always()
+        with:
+          name: msbuild.binlog
+          path: src/ProfanityFilter.WebApi/msbuild.binlog
