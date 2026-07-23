@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test emoji replacement strategy with confused reaction
 on:
   workflow_dispatch:
 jobs:
@@ -17,14 +17,14 @@ jobs:
           git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
             git remote add origin "$GITHUB_WORKSPACE/.git-remote"
 
-      - name: Run profanity filter action with default settings
+      - name: Run profanity filter with emoji strategy and confused reaction enabled
         id: action
         uses: .
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          replacement-strategy: asterisk
+          replacement-strategy: emoji
           include-updated-note: 'true'
-          include-confused-reaction: 'false'
+          include-confused-reaction: 'true'
         continue-on-error: true
 
       - name: Assert action completed (no crash)
@@ -32,11 +32,8 @@ jobs:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
-          # The action may succeed or fail gracefully when there is no issue/PR event.
-          # What we must NOT see is a hard infrastructure failure (e.g. image pull error).
-          # Both 'success' and 'failure' are acceptable; only 'cancelled' is not.
           if [ "$OUTCOME" = "cancelled" ]; then
             echo "FAIL: action was cancelled unexpectedly"
             exit 1
           fi
-          echo "PASS: action completed with outcome=$OUTCOME"
+          echo "PASS: action completed with outcome=$OUTCOME using emoji strategy"

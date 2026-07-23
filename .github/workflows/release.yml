@@ -24,16 +24,11 @@ jobs:
 
     steps:
       - name: 📥 Check out the repo
-        uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f # main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: 🏷️ Get the version
         if: ${{ github.event_name != 'workflow_dispatch' }}
-        env:
-          GIT_REF: ${{ github.ref }}
-        run: |
-          raw="${GIT_REF#refs/tags/}"
-          safe=$(printf '%s' "$raw" | tr -d '\n\r')
-          echo "RELEASE_VERSION=$safe" >> "$GITHUB_ENV"
+        run: echo "RELEASE_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
       - name: 🏷️ Get the version
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -44,10 +39,10 @@ jobs:
           echo "RELEASE_VERSION=$safe" >> "$GITHUB_ENV"
 
       - name: 💜 Setup .NET
-        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # main
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
 
       - name: 🔐 Login to GitHub Container Registry
-        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -68,7 +63,7 @@ jobs:
             -bl
 
       - name: 📦 Upload build log
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # main
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: msbuild.binlog

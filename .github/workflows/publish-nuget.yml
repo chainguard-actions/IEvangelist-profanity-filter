@@ -31,14 +31,14 @@ jobs:
 
     steps:
       - name: 📥 Checkout repository (full history)
-        uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f # main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           filter: tree:0
           ref: ${{ github.ref }}
 
       - name: 💜 Setup .NET
-        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # main
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           global-json-file: ./global.json
 
@@ -84,13 +84,13 @@ jobs:
         run: ls -la artifacts/package/release || true
 
       - name: ⬆️ Upload ProfanityFilter.Hosting artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # main
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: hosting-nuget
           path: artifacts/package/release/ProfanityFilter.Hosting.*.nupkg
 
       - name: ⬆️ Upload ProfanityFilter.Client artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # main
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: client-nuget
           path: artifacts/package/release/ProfanityFilter.Client.*.nupkg
