@@ -1,0 +1,70 @@
+name: Release GitHub Action container
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The manual version to release'
+        required: true
+
+env:
+  IMAGE_NAME: ievangelist/profanity-filter
+  # The base image is now inferred by the .NET SDK.
+  # https://github.com/dotnet/dotnet-docker/blob/nightly/README.runtime-deps.md#full-tag-listing
+  # BASE_IMAGE: mcr.microsoft.com/dotnet/nightly/runtime-deps:9.0.0-noble-chiseled-aot
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Check out the repo
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # main
+
+      - name: 🏷️ Get the version
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: echo "RELEASE_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+
+      - name: 🏷️ Get the version
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          safe=$(printf '%s' "$INPUT_VERSION" | tr -d '\n\r')
+          echo "RELEASE_VERSION=$safe" >> $GITHUB_ENV
+
+      - name: 💜 Setup .NET
+        uses: actions/setup-dotnet@5e931af6be0e018f807de246b52f546bfb8da48a # main
+
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐳 Publish app
+        working-directory: ./src/ProfanityFilter.Action
+        env:
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+          CONTAINER_REPOSITORY: ${{ env.IMAGE_NAME }}
+        run: |
+          dotnet publish \
+            /t:PublishContainer \
+            -p DebugType=none \
+            -p ContainerRegistry=ghcr.io \
+            -p ContainerImageTags="\"latest;$RELEASE_VERSION\"" \
+            -p ContainerRepository="$CONTAINER_REPOSITORY" \
+            -bl
+
+      - name: 📦 Upload build log
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # main
+        if: always()
+        with:
+          name: msbuild.binlog
+          path: src/ProfanityFilter.Action/msbuild.binlog

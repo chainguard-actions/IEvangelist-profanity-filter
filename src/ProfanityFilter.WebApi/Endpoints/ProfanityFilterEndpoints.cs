@@ -1,0 +1,199 @@
+﻿// Copyright (c) David Pine. All rights reserved.
+// Licensed under the MIT License.
+
+namespace ProfanityFilter.WebApi.Endpoints;
+
+internal static partial class ProfanityFilterEndpoints
+{
+    internal static WebApplication MapProfanityFilterEndpoints(this WebApplication app)
+    {
+        var profanity = app.MapGroup("profanity")
+            .DisableAntiforgery();
+
+        profanity.MapHub<ProfanityHub>("hub", options =>
+            {
+                options.AllowStatefulReconnects = true;
+                options.Transports =
+                    HttpTransportType.WebSockets |
+                    HttpTransportType.ServerSentEvents |
+                    HttpTransportType.LongPolling;
+            })
+            // Doesn't actually work, consider AsyncAPI per Safia!
+            .WithSummary("""
+                The profanity filter hub endpoint, used for live bi-directional updates.
+                """);
+
+        profanity.MapPost("filter", OnApplyFilterAsync)
+            .Produces<ProfanityFilterResponse>(200)
+            .ProducesValidationProblem()
+            .WithRequestTimeout(TimeSpan.FromSeconds(10))
+            .WithSummary("""
+                Use this endpoint to attempt applying a profanity-filter. The response is returned as Markdown.
+                """)
+            .WithHttpLogging(HttpLoggingFields.All);
+
+        profanity.MapGet("strategies", OnGetStrategies)
+            .Produces<StrategyResponse[]>(200)
+            .WithRequestTimeout(TimeSpan.FromSeconds(10))
+            .CacheOutput()
+            .WithSummary("""
+                Returns an array of the possible replacement strategies available. See https://github.com/IEvangelist/profanity-filter?tab=readme-ov-file#-replacement-strategies
+                """)
+            .WithHttpLogging(HttpLoggingFields.All);
+
+        profanity.MapGet("targets", OnGetTargets)
+            .Produces<FilterTargetResponse[]>(200)
+            .WithRequestTimeout(TimeSpan.FromSeconds(10))
+            .CacheOutput()
+            .WithSummary("""
+                        Returns an array of the possible filter targets available.
+                        """)
+            .WithHttpLogging(HttpLoggingFields.All);
+
+        profanity.MapGet("info", OnGetDataInfoAsync)
+            .Produces<ProfanityDataInfoResponse>(200)
+            .WithRequestTimeout(TimeSpan.FromSeconds(10))
+            .CacheOutput()
+            .WithSummary("""
+                Returns aggregate statistics about the profane content dictionaries, including the total number of sources (languages) and words, plus a per-source word-count breakdown.
+                """)
+            .WithHttpLogging(HttpLoggingFields.All);
+
+        var data = profanity.MapGroup("data")
+            .DisableAntiforgery();
+
+        data.MapGet("", OnGetDataNamesAsync)
+            .Produces<string[]>(200)
+            .WithRequestTimeout(TimeSpan.FromSeconds(10))
+            .CacheOutput()
+            .WithSummary("""
+                Returns an array of the data names.
+                """)
+            .WithHttpLogging(HttpLoggingFields.All);
+
+        data.MapGet("{name}", OnGetDataByNameAsync)
+            .Produces<string[]>(200)
+            .WithRequestTimeout(TimeSpan.FromSeconds(10))
+            .CacheOutput()
+            .WithSummary("""
+                Returns an array of the profane words for a given data name.
+                """)
+            .WithHttpLogging(HttpLoggingFields.All);
+
+        return app;
+    }
+
+    private static async Task<IResult> OnApplyFilterAsync(
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Disallow)] ProfanityFilterRequest request,
+        [FromServices] IProfaneContentFilterService filterService)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Text))
+        {
+            return Results.BadRequest("""
+                You need to provide a valid request, as example HTTP POST body:
+                {
+                    "text": "Some content to evaluate.",
+                    "strategy": "RedactedRectangle"
+                }
+                """);
+        }
+
+        var parameters = new FilterParameters(
+            request.Strategy, FilterTarget.Body);
+
+        var filterResult =
+            await filterService.FilterProfanityAsync(request.Text, parameters);
+
+        var response = new ProfanityFilterResponse(
+            ContainsProfanity: filterResult.IsFiltered,
+            InputText: filterResult.Input ?? "",
+            FilteredText: filterResult.FinalOutput,
+            ReplacementStrategy: request.Strategy,
+            FiltrationSteps: [.. filterResult.Steps?.Where(static s => s.IsFiltered) ?? []],
+            Matches: [.. filterResult.Matches ?? []]
+        );
+
+        return TypedResults.Json(
+            response,
+            JsonSerializationContext.Default.ProfanityFilterResponse);
+    }
+
+    private static JsonHttpResult<StrategyResponse[]> OnGetStrategies() =>
+        TypedResults.Json([
+                .. Enum.GetValues<ReplacementStrategy>()
+            ],
+            JsonSerializationContext.Default.StrategyResponseArray
+        );
+
+    private static JsonHttpResult<FilterTargetResponse[]> OnGetTargets() =>
+        TypedResults.Json([
+                .. Enum.GetValues<FilterTarget>()
+            ],
+            JsonSerializationContext.Default.FilterTargetResponseArray
+        );
+
+    private static async Task<IResult> OnGetDataInfoAsync(
+        [FromServices] IMemoryCache cache,
+        [FromServices] IProfaneContentFilterService filterService)
+    {
+        var map = await filterService.ReadAllProfaneWordsAsync();
+
+        var fileNames = await GetProfaneContentNamesAsync(cache, map.Keys);
+
+        var sources = map
+            .Select(kvp => new ProfanityDataSourceInfo(
+                Name: fileNames.TryGetValue(kvp.Key, out var name) && name is { Length: > 0 }
+                    ? name
+                    : Path.GetFileNameWithoutExtension(kvp.Key),
+                WordCount: kvp.Value.ProfaneWords.Count))
+            .OrderByDescending(static source => source.WordCount)
+            .ThenBy(static source => source.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var response = new ProfanityDataInfoResponse(
+            TotalSources: sources.Length,
+            TotalWords: sources.Sum(static source => source.WordCount),
+            Sources: sources);
+
+        return TypedResults.Json(
+            response,
+            JsonSerializationContext.Default.ProfanityDataInfoResponse);
+    }
+
+    private static async Task<IResult> OnGetDataNamesAsync(
+        [FromServices] IMemoryCache cache,
+        [FromServices] IProfaneContentFilterService filterService)
+    {
+        var map = await filterService.ReadAllProfaneWordsAsync();
+
+        var fileNames = await GetProfaneContentNamesAsync(cache, map.Keys);
+
+        return TypedResults.Json([
+                .. fileNames.Keys
+            ],
+            JsonSerializationContext.Default.StringArray);
+    }
+
+    private static async Task<IResult> OnGetDataByNameAsync(
+        [FromRoute] string name,
+        [FromServices] IMemoryCache cache,
+        [FromServices] IProfaneContentFilterService filterService)
+    {
+        var map = await filterService.ReadAllProfaneWordsAsync();
+
+        var fileNames = await GetProfaneContentNamesAsync(cache, map.Keys);
+
+        foreach (var (key, value) in map)
+        {
+            if (fileNames.TryGetValue(key, out var fileName) && fileName == name)
+            {
+                return TypedResults.Json([
+                        .. value.ProfaneWords
+                    ],
+                    JsonSerializationContext.Default.StringArray);
+            }
+        }
+
+        return TypedResults.NotFound();
+    }
+}

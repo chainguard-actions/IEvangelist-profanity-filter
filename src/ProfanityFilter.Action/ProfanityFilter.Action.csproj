@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(DefaultTargetFramework)</TargetFramework>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <PublishAot>true</PublishAot>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
+    <NoWarn>$(NoWarn);NU5104;IL2104;IDE0005</NoWarn>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <PackageId>$(AssemblyName)</PackageId>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ContainerUser>root</ContainerUser>
+    <ContainerDescription>Potty Mouth: A profanity filter designed for GitHub Actions.</ContainerDescription>
+    <ContainerAuthors>David Pine</ContainerAuthors>
+    <ContainerInformationUrl>
+      https://github.com/IEvangelist/profanity-filter
+    </ContainerInformationUrl>
+    <ContainerDocumentationUrl>
+      https://github.com/marketplace/actions/potty-mouth
+    </ContainerDocumentationUrl>
+    <ContainerLicenseExpression>
+      https://github.com/IEvangelist/profanity-filter/blob/main/LICENSE
+    </ContainerLicenseExpression>
+  </PropertyGroup>
+    
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="GitHub.Actions.Core" />
+    <PackageReference Include="GitHub.Actions.Octokit" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <ProjectReference Include="..\ProfanityFilter.Services\ProfanityFilter.Services.csproj" />
+  </ItemGroup>
+
+</Project>
