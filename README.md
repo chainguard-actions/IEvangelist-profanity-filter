@@ -13,6 +13,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | 10.0.1-preview.010 | [`10.0.1-preview.010`](https://github.com/chainguard-actions/IEvangelist-profanity-filter/tree/10.0.1-preview.010) | [`7d2794b`](https://github.com/IEvangelist/profanity-filter/commit/7d2794be847ebef5b87781abc256bb60d5e922e9) |
 | 13.3.0 | [`13.3.0`](https://github.com/chainguard-actions/IEvangelist-profanity-filter/tree/13.3.0) | [`9d95889`](https://github.com/IEvangelist/profanity-filter/commit/9d95889a67d0935e5af511e7141cb72c3952abaf) |
 | 13.4.6.1 | [`13.4.6.1`](https://github.com/chainguard-actions/IEvangelist-profanity-filter/tree/13.4.6.1) | [`9170754`](https://github.com/IEvangelist/profanity-filter/commit/917075453631f528be8f9160e08aab70bff74ac5) |
+| 13.4.6.2 | [`13.4.6.2`](https://github.com/chainguard-actions/IEvangelist-profanity-filter/tree/13.4.6.2) | [`96fb7c0`](https://github.com/IEvangelist/profanity-filter/commit/96fb7c017b3219ea65c6a7ca70e5aed3ce5b4d7d) |
 
 ## Privacy
 
