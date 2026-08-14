@@ -36,4 +36,4 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://ghcr.io/ievangelist/profanity-filter@sha256:23ffe1e4e2e72dece675fc6a3ad539e61079e1216d3a928b9ae28f4e04a75ea1' # latest
+  image: 'docker://ghcr.io/ievangelist/profanity-filter:latest@sha256:c472f7403a207cdc724fad5fb0d283c288c28a9ad412a0060eb4a1b86b7be436'

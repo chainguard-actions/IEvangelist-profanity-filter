@@ -4,20 +4,26 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_EVENT_NAME: issues
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
         uses: .
         continue-on-error: true
         with:
-          token: fake-token
-          custom-profane-words-url: 'https://raw.githubusercontent.com/IEvangelist/profanity-filter/main/tests/ProfanityFilter.Services.Tests/TestData/custom-words.txt'
+          token: ${{ github.token }}
+          custom-profane-words-url: 'https://raw.githubusercontent.com/IEvangelist/profanity-filter/main/src/ProfanityFilter.Services/DefaultProfaneWordSet.txt'
           replacement-strategy: 'asterisk'
           include-updated-note: 'false'
           include-confused-reaction: 'false'
       - name: Assert action ran with custom-profane-words-url input
         run: |
-          echo "Action completed (exit: ${{ steps.action.outcome }})"
-          echo "PASS: custom-profane-words-url input was accepted by the action"
+          echo "Action outcome: ${{ steps.action.outcome }}"
+          # The action may fail because there is no active issue/PR event context,
+          # but what matters is that it accepted the custom-profane-words-url input
+          # and attempted to run (not a configuration/input-parsing error).
+          # A 'failure' outcome is acceptable here since we're running via workflow_dispatch.
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran with custom-profane-words-url input provided"

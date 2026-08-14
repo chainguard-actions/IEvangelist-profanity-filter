@@ -1,4 +1,4 @@
-name: Test manual profane words input
+name: Test bleep replacement strategy with confused reaction
 on:
   workflow_dispatch:
 jobs:
@@ -6,17 +6,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Run profanity filter with manual profane words
+      - name: Run profanity filter with bleep strategy and confused reaction
         id: action
         uses: .
         with:
           token: ${{ github.token }}
-          replacement-strategy: asterisk
-          include-updated-note: 'true'
-          include-confused-reaction: 'false'
-          manual-profane-words: 'badword1,badword2,badword3'
+          replacement-strategy: bleep
+          include-updated-note: 'false'
+          include-confused-reaction: 'true'
         continue-on-error: true
-      - name: Assert action ran with manual profane words
+      - name: Assert action ran with bleep strategy
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
@@ -27,4 +26,4 @@ jobs:
             echo "FAIL: action was cancelled unexpectedly"
             exit 1
           fi
-          echo "PASS: action ran with manual profane words, outcome=$OUTCOME"
+          echo "PASS: action ran with bleep strategy and confused reaction, outcome=$OUTCOME"
