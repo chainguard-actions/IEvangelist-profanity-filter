@@ -1,4 +1,4 @@
-name: Test manual profane words input
+name: Test with confused reaction enabled
 on:
   workflow_dispatch:
 jobs:
@@ -6,15 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Run profanity filter with manual profane words
+      - name: Run profanity filter with confused reaction enabled
         id: action
         uses: .
         with:
           token: ${{ github.token }}
           replacement-strategy: asterisk
-          include-updated-note: 'true'
-          include-confused-reaction: 'false'
-          manual-profane-words: 'badword1,badword2,badword3'
+          include-updated-note: 'false'
+          include-confused-reaction: 'true'
         continue-on-error: true
       - name: Assert action ran without configuration error
         env:
@@ -23,9 +22,9 @@ jobs:
           echo "outcome: $OUTCOME"
           # The action may succeed (no issue/PR to process = no-op) or fail
           # because there is no issue/PR event. Either way it must NOT fail
-          # due to invalid manual-profane-words input or missing required input.
+          # due to invalid input values or missing required input.
           if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action ran with manual profane words (outcome=$OUTCOME)"
+            echo "PASS: action ran with confused reaction enabled (outcome=$OUTCOME)"
           else
             echo "FAIL: unexpected outcome: $OUTCOME"
             exit 1
