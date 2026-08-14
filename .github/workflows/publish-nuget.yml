@@ -1,0 +1,113 @@
+name: Release NuGet packages
+
+# Publishes ProfanityFilter.Hosting + ProfanityFilter.Client to nuget.org
+# using NuGet Trusted Publishing (OIDC). No long-lived API keys are stored
+# in GitHub secrets — the workflow exchanges a short-lived GitHub OIDC
+# token for a temporary API key that is valid for 1 hour.
+#
+# To wire this up on nuget.org:
+#   1. Sign in at https://nuget.org and open Account → Trusted Publishing.
+#   2. Add a new policy with these values:
+#        Repository Owner: IEvangelist
+#        Repository:       profanity-filter
+#        Workflow File:    publish-nuget.yml
+#        Environment:      production
+#   3. Save the policy. (Private repos start as 7-day "pending" — the first
+#      successful publish within that window converts it to permanent.)
+# https://learn.microsoft.com/nuget/nuget-org/trusted-publishing
+
+on:
+  push:
+    tags:
+      - '**'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production    # required by the nuget.org trusted-publishing policy
+    permissions:
+      contents: read
+      id-token: write    # required for the OIDC token exchange with nuget.org
+
+    steps:
+      - name: 📥 Checkout repository (full history)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # main
+        with:
+          fetch-depth: 0
+          filter: tree:0
+          ref: ${{ github.ref }}
+
+      - name: 💜 Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # main
+        with:
+          global-json-file: ./global.json
+
+      - name: 🏷️ Fetch all tags
+        run: git fetch --force --tags
+
+      - name: 🔍 Show git and .NET info (debug)
+        env:
+          GITHUB_REF_VALUE: ${{ github.ref }}
+          GITHUB_REF_NAME_VALUE: ${{ github.ref_name }}
+        run: |
+          git --version
+          echo "GitHub ref: $GITHUB_REF_VALUE"
+          echo "GitHub ref_name: $GITHUB_REF_NAME_VALUE"
+          echo "Current ref: $(git rev-parse --abbrev-ref HEAD)"
+          echo "Current SHA: $(git rev-parse HEAD)"
+          echo "Tags pointing at HEAD:"
+          git tag --points-at HEAD || true
+          echo "Describe exact tag (if any):"
+          git describe --tags --exact-match || echo 'no exact tag on HEAD'
+          echo "All tags:"
+          git tag -l | tail -10
+          echo "Recent commits:"
+          git --no-pager log --oneline -n 5
+          echo "\nDotnet info:"
+          dotnet --info
+
+      - name: 📦 Restore dependencies
+        run: dotnet restore
+
+      - name: 🔨 Build solution (skip auto-packing)
+        run: dotnet build --configuration Release /p:GeneratePackageOnBuild=false
+
+      - name: 📦 Pack projects with explicit version from tag
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
+        run: |
+          echo "Packing with explicit version: $TAG_VERSION"
+          dotnet pack src/ProfanityFilter.Hosting/ProfanityFilter.Hosting.csproj -c Release -o artifacts/package/release --no-build /p:IncludeSymbols=false /p:Version="$TAG_VERSION" /p:PackageVersion="$TAG_VERSION"
+          dotnet pack src/ProfanityFilter.Client/ProfanityFilter.Client.csproj -c Release -o artifacts/package/release --no-build /p:IncludeSymbols=false /p:Version="$TAG_VERSION" /p:PackageVersion="$TAG_VERSION"
+
+      - name: 📋 List created packages
+        run: ls -la artifacts/package/release || true
+
+      - name: ⬆️ Upload ProfanityFilter.Hosting artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # main
+        with:
+          name: hosting-nuget
+          path: artifacts/package/release/ProfanityFilter.Hosting.*.nupkg
+
+      - name: ⬆️ Upload ProfanityFilter.Client artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # main
+        with:
+          name: client-nuget
+          path: artifacts/package/release/ProfanityFilter.Client.*.nupkg
+
+      - name: 🔑 NuGet login (OIDC → temporary API key)
+        id: nuget-login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
+        with:
+          user: dpine
+
+      - name: 🚀 Publish NuGet packages
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          for pkg in artifacts/package/release/*.nupkg; do
+            echo "Publishing $pkg"
+            dotnet nuget push --skip-duplicate "$pkg" \
+              --source "https://api.nuget.org/v3/index.json" \
+              --api-key "$NUGET_API_KEY"
+          done

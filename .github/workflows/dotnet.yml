@@ -1,0 +1,54 @@
+# This workflow will build and test multiple .NET projects using a matrix strategy
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: Build .NET
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - '**'
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project:
+          - ProfanityFilter.Action.Tests
+          - ProfanityFilter.Client.Tests
+          - ProfanityFilter.Services.Tests
+          - ProfanityFilter.Common.Tests
+
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # main
+
+    - name: 💜 Setup .NET
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # main
+      with:
+        global-json-file: ./global.json
+
+    - name: 📦 Restore dependencies
+      run: dotnet restore
+
+    - name: 🧪 Test — ${{ matrix.project }}
+      env:
+        MATRIX_PROJECT: ${{ matrix.project }}
+      run: |
+        # Publish the test project.
+        dotnet publish --configuration Release "tests/$MATRIX_PROJECT/"
+
+        # Change to the test project directory.
+        cd "artifacts/publish/$MATRIX_PROJECT"
+        ls
+        cd ./release_linux-x64
+
+        # Call test executable.
+        "./$MATRIX_PROJECT"

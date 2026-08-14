@@ -6,7 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+      - name: Run profanity filter with custom-profane-words-url
+        id: action
         uses: .
         with:
           token: ${{ github.token }}
@@ -15,7 +16,14 @@ jobs:
           include-updated-note: 'false'
           include-confused-reaction: 'false'
         continue-on-error: true
-      - name: Assert action ran without unexpected error
+      - name: Assert action ran with custom-profane-words-url input
         run: |
-          echo "Action completed (may have no issue/PR to filter in this context)"
-          echo "PASS"
+          echo "Action completed (outcome: ${{ steps.action.outcome }})"
+          # The action may exit with an error if there is no active issue/PR to filter,
+          # but the important thing is that the custom-profane-words-url input was accepted
+          # and the action attempted to run. A failure due to no issue/PR context is expected.
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran with custom-profane-words-url input"

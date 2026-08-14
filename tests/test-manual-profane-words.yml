@@ -4,29 +4,25 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: fake-token-for-testing
-      GITHUB_EVENT_NAME: issues
-      GITHUB_REPOSITORY: test-owner/test-repo
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Run profanity filter with manual profane words
         id: action
-        continue-on-error: true
         uses: .
         with:
-          token: fake-token-for-testing
+          token: ${{ github.token }}
           replacement-strategy: asterisk
-          include-updated-note: 'true'
-          include-confused-reaction: 'true'
-          manual-profane-words: 'badword1,badword2,badword3'
-      - name: Assert action ran with manual profane words
+          manual-profane-words: 'badword,anotherbadword'
+          include-updated-note: 'false'
+          include-confused-reaction: 'false'
+        continue-on-error: true
+      - name: Assert action completed (no crash)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
         run: |
-          echo "Action outcome: ${{ steps.action.outcome }}"
-          # The action should run (success or graceful failure due to no real issue context).
-          if [ "${{ steps.action.outcome }}" = "success" ] || [ "${{ steps.action.outcome }}" = "failure" ]; then
-            echo "PASS: action ran with manual profane words configured"
-          else
-            echo "FAIL: unexpected outcome '${{ steps.action.outcome }}'"
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "FAIL: action failed unexpectedly with manual profane words"
             exit 1
           fi
+          echo "PASS: action completed with outcome=$OUTCOME"
