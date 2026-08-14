@@ -1,0 +1,65 @@
+name: Release API container
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The manual version to release'
+        required: true
+
+env:
+  IMAGE_NAME: ievangelist/profanity-filter-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # main
+
+      - name: Get the version
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: echo "RELEASE_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+
+      - name: Get the version
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          safe=$(printf '%s' "$INPUT_VERSION" | tr -d '\n\r')
+          echo "RELEASE_VERSION=$safe" >> $GITHUB_ENV
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # main
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish app
+        working-directory: ./src/ProfanityFilter.WebApi
+        env:
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+        run: |
+          dotnet publish -c Release \
+            /t:PublishContainer \
+            -p DebugType=none \
+            -p ContainerRegistry=ghcr.io \
+            -p ContainerImageTags="\"latest;$RELEASE_VERSION\"" \
+            -p ContainerRepository="$IMAGE_NAME" \
+            -bl
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # main
+        if: always()
+        with:
+          name: msbuild.binlog
+          path: src/ProfanityFilter.WebApi/msbuild.binlog

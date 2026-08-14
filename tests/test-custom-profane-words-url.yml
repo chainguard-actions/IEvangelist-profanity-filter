@@ -4,26 +4,24 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_EVENT_NAME: issues
-      GITHUB_REF: refs/heads/main
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
-        continue-on-error: true
         uses: .
         with:
-          token: fake-token-for-testing
+          token: ${{ github.token }}
           custom-profane-words-url: 'https://raw.githubusercontent.com/IEvangelist/profanity-filter/main/tests/ProfanityFilter.Services.Tests/TestData/custom-words.txt'
-          replacement-strategy: asterisk
+          replacement-strategy: 'asterisk'
           include-updated-note: 'false'
           include-confused-reaction: 'false'
+        continue-on-error: true
       - name: Assert action ran with custom-profane-words-url input
         run: |
-          echo "Action outcome: ${{ steps.action.outcome }}"
-          # The action may fail due to fake token/no real issue context,
-          # but what matters is that the custom-profane-words-url input was accepted.
-          # A failure due to API auth is expected; a failure due to unknown input is not.
+          echo "Action completed (outcome: ${{ steps.action.outcome }})"
+          # The action may succeed or fail depending on whether there is an active
+          # issue/PR event, but the important thing is that the input was accepted
+          # and the action was invoked. A failure due to no issue/PR context is
+          # acceptable; a failure due to an unrecognized input would not be.
           if [ "${{ steps.action.outcome }}" = "skipped" ]; then
             echo "FAIL: action was skipped unexpectedly"
             exit 1
